@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>神殿番人検定 - Mr. Popo Maniac Quiz</title>
+<style>
+  :root{
+    --bg1:#090814;
+    --bg2:#1b1030;
+    --panel:rgba(255,255,255,.08);
+    --panel2:rgba(255,255,255,.12);
+    --text:#f8f6ff;
+    --muted:#c8bddf;
+    --gold:#ffd166;
+    --red:#ff4d6d;
+    --blue:#74c0fc;
+    --green:#69db7c;
+    --purple:#b197fc;
+    --shadow:0 18px 50px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(circle at 20% 10%,#2d1b58 0,#151125 38%,#070711 100%);}
+  body{overflow-x:hidden}
+  .sky{
+    position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;
+  }
+  .orb{
+    position:absolute;border-radius:50%;filter:blur(.2px);opacity:.45;
+    background:radial-gradient(circle,#fff 0 10%,#ffe6a3 12%,transparent 64%);
+    animation:float 10s linear infinite;
+  }
+  @keyframes float{
+    from{transform:translateY(110vh) scale(.6);opacity:0}
+    15%{opacity:.6}
+    85%{opacity:.3}
+    to{transform:translateY(-20vh) scale(1.1);opacity:0}
+  }
+  .wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:18px 14px 40px}
+  header{
+    padding:22px 18px;border:1px solid rgba(255,255,255,.12);
+    background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.045));
+    border-radius:26px;box-shadow:var(--shadow);backdrop-filter:blur(10px);
+    overflow:hidden;position:relative;
+  }
+  header:before{
+    content:"";position:absolute;inset:-2px;
+    background:radial-gradient(circle at 75% 20%,rgba(255,209,102,.18),transparent 34%),
+               radial-gradient(circle at 15% 80%,rgba(116,192,252,.16),transparent 32%);
+    pointer-events:none;
+  }
+  h1{position:relative;margin:0;font-size:clamp(24px,5vw,48px);letter-spacing:.02em}
+  .sub{position:relative;color:var(--muted);line-height:1.7;margin:10px 0 0;font-size:15px}
+  .badgeRow{position:relative;display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .badge{padding:7px 10px;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(0,0,0,.18);font-size:12px;color:#efe9ff}
+  main{display:grid;grid-template-columns:360px 1fr;gap:16px;margin-top:16px}
+  @media(max-width:880px){main{grid-template-columns:1fr}}
+  .card{
+    border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.075);
+    border-radius:24px;box-shadow:var(--shadow);backdrop-filter:blur(10px);
+  }
+  .side{padding:16px;align-self:start;position:sticky;top:10px}
+  @media(max-width:880px){.side{position:relative;top:0}}
+  .modeTitle{font-size:15px;font-weight:800;margin:4px 0 10px;color:#fff}
+  .modeGrid{display:grid;gap:8px}
+  button{
+    appearance:none;border:0;border-radius:16px;padding:13px 14px;color:var(--text);
+    background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.07));
+    border:1px solid rgba(255,255,255,.14);font-weight:800;cursor:pointer;
+    box-shadow:0 8px 20px rgba(0,0,0,.22);
+    transition:transform .08s ease, background .18s ease, border-color .18s ease;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  }
+  button:active{transform:scale(.985)}
+  button:hover{border-color:rgba(255,255,255,.32);background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.09))}
+  .modeBtn{text-align:left}
+  .modeBtn small{display:block;color:var(--muted);font-weight:600;margin-top:4px;line-height:1.5}
+  .modeBtn.active{outline:2px solid var(--gold);background:linear-gradient(135deg,rgba(255,209,102,.25),rgba(255,255,255,.08))}
+  .meter{height:10px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;margin:10px 0 6px}
+  .meter>div{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--gold),var(--red));transition:width .35s ease}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .stat{padding:12px;border-radius:18px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08)}
+  .stat b{display:block;font-size:22px;color:var(--gold)}
+  .stat span{font-size:12px;color:var(--muted)}
+  .quiz{padding:18px}
+  .topline{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+  .pill{font-size:12px;color:#150f05;background:var(--gold);padding:6px 10px;border-radius:999px;font-weight:900}
+  .danger{background:var(--red);color:white}
+  .blue{background:var(--blue);color:#07131f}
+  .questionBox{padding:18px;border-radius:22px;background:linear-gradient(135deg,rgba(0,0,0,.24),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.10)}
+  .qMeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .qMeta span{font-size:12px;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:5px 8px;color:#ece5ff;background:rgba(255,255,255,.06)}
+  .qText{font-size:clamp(18px,3.4vw,26px);font-weight:900;line-height:1.55;margin:4px 0}
+  .hint{color:var(--muted);font-size:13px;line-height:1.7;margin-top:9px}
+  .choices{display:grid;gap:10px;margin-top:14px}
+  .choice{
+    width:100%;text-align:left;font-size:15px;line-height:1.55;min-height:58px;display:flex;gap:10px;align-items:flex-start;
+  }
+  .choice .mark{flex:0 0 auto;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.14);font-weight:900;color:var(--gold)}
+  .choice.correct{background:linear-gradient(135deg,rgba(105,219,124,.34),rgba(255,255,255,.08));border-color:rgba(105,219,124,.75)}
+  .choice.wrong{background:linear-gradient(135deg,rgba(255,77,109,.34),rgba(255,255,255,.08));border-color:rgba(255,77,109,.75)}
+  .choice.locked{pointer-events:none}
+  .explain{
+    display:none;margin-top:14px;padding:15px;border-radius:18px;background:rgba(0,0,0,.22);
+    border:1px solid rgba(255,255,255,.10);line-height:1.75;color:#f2edff;
+  }
+  .explain.show{display:block}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .primary{background:linear-gradient(135deg,rgba(255,209,102,.38),rgba(255,255,255,.08));color:#fff}
+  .secondary{background:rgba(255,255,255,.08)}
+  .result{
+    display:none;padding:18px;border-radius:24px;background:linear-gradient(135deg,rgba(255,209,102,.18),rgba(255,255,255,.06));
+    border:1px solid rgba(255,209,102,.28);margin-top:16px
+  }
+  .result.show{display:block}
+  .rank{font-size:clamp(28px,6vw,54px);font-weight:1000;margin:0;color:var(--gold)}
+  .small{font-size:13px;color:var(--muted);line-height:1.7}
+  .log{margin-top:14px;max-height:230px;overflow:auto;padding-right:4px}
+  .logItem{padding:10px;border-radius:14px;background:rgba(0,0,0,.16);margin-bottom:8px;border:1px solid rgba(255,255,255,.07);font-size:13px;line-height:1.55}
+  .footerNote{margin-top:14px;font-size:12px;color:var(--muted);line-height:1.7}
+  .temple{
+    margin-top:12px;height:130px;border-radius:22px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.09);
+    background:linear-gradient(#211946,#080712);
+  }
+  .temple:before{
+    content:"";position:absolute;left:50%;top:26px;transform:translateX(-50%);
+    width:220px;height:64px;border-radius:50%;background:rgba(255,255,255,.18);box-shadow:0 0 40px rgba(255,255,255,.15);
+  }
+  .temple:after{
+    content:"神殿";position:absolute;left:50%;top:45px;transform:translateX(-50%);
+    width:150px;height:46px;border-radius:10px 10px 20px 20px;background:rgba(255,255,255,.82);color:#2b2440;
+    display:grid;place-items:center;font-weight:1000;letter-spacing:.3em;box-shadow:0 14px 30px rgba(0,0,0,.35);
+  }
+  .cloud{position:absolute;bottom:18px;width:120px;height:24px;border-radius:999px;background:rgba(255,255,255,.22)}
+  .c1{left:18px}.c2{right:24px;bottom:36px;width:150px}.c3{left:42%;bottom:10px;width:90px}
+  .copyright{font-size:11px;color:#aaa0c4;margin-top:10px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="sky" id="sky"></div>
+<div class="wrap">
+  <header>
+    <h1>神殿番人検定：ミスターポポ級</h1>
+    <p class="sub">ドラゴンボール世界の「神殿」「修行」「移動手段」「登場文脈」を、かなり細かい記憶と読解で問う超難問クイズ。公式画像・ロゴは使わず、テキストだけでマニアックに作っています。</p>
+    <div class="badgeRow">
+      <span class="badge">4択式</span>
+      <span class="badge">級別モード</span>
+      <span class="badge">ひっかけ多め</span>
+      <span class="badge">スマホ対応</span>
+      <span class="badge">解説つき</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card side">
+      <div class="modeTitle">挑戦モード</div>
+      <div class="modeGrid" id="modeGrid"></div>
+
+      <div class="temple">
+        <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><b id="score">0</b><span>正解数</span></div>
+        <div class="stat"><b id="streak">0</b><span>連続正解</span></div>
+        <div class="stat"><b id="qno">0</b><span>現在問</span></div>
+        <div class="stat"><b id="acc">0%</b><span>正答率</span></div>
+      </div>
+      <div class="meter"><div id="bar"></div></div>
+      <p class="footerNote">※かなり意地悪です。選択肢は「全部それっぽい」ようにしてあります。</p>
+      <p class="copyright">非公式ファンメイドの学習・クイズ用HTMLです。作品名・キャラクター名は識別のためのテキスト参照のみです。</p>
+    </section>
+
+    <section class="card quiz">
+      <div class="topline">
+        <span class="pill" id="modeLabel">初期設定中</span>
+        <span class="pill blue" id="phaseLabel">READY</span>
+        <span class="pill danger" id="timerLabel">制限なし</span>
+      </div>
+
+      <div class="questionBox">
+        <div class="qMeta" id="qMeta"></div>
+        <div class="qText" id="qText"></div>
+        <div class="hint" id="hint"></div>
+        <div class="choices" id="choices"></div>
+        <div class="explain" id="explain"></div>
+        <div class="controls">
+          <button class="primary" id="nextBtn">次の問題へ</button>
+          <button class="secondary" id="restartBtn">最初から</button>
+          <button class="secondary" id="shuffleBtn">問題をシャッフル</button>
+        </div>
+      </div>
+
+      <div class="result" id="result">
+        <p class="rank" id="rank"></p>
+        <p id="resultText"></p>
+        <div class="log" id="log"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const MODES = [
+  {id:"basic", name:"神殿見習い", desc:"基本だけ…に見せかけて、細かい文脈を問う", count:10, time:0},
+  {id:"hard", name:"番人補佐", desc:"登場場面・役割・修行描写の混合難問", count:15, time:18},
+  {id:"mania", name:"神殿深層", desc:"かなりマニアック。曖昧な記憶だと崩壊します", count:20, time:14},
+  {id:"hell", name:"ポポの試練", desc:"選択肢が全部それっぽい地獄級。全問から出題", count:999, time:12}
+];
+
+const QUESTIONS = [
+  {
+    level:"基本偽装", tag:"神殿", diff:2,
+    q:"ミスターポポの立ち位置として最も近いものはどれ？",
+    h:"単なる戦闘要員ではなく、場所と修行に強く結びつく存在。",
+    a:1,
+    c:[
+      "神様の代理として天下一武道会を直接管理する大会運営者",
+      "神の神殿に仕え、神様や修行者を補佐する番人・付き人のような存在",
+      "カリン塔の仙豆栽培を専門に管理する仙人の補佐役",
+      "ドラゴンボール探索を主目的に悟空たちへ同行する旅の案内人"
+    ],
+    e:"ミスターポポは、神の神殿と神様に深く結びついた存在です。戦闘中心というより、神殿の管理、修行の補佐、移動手段の管理などで印象が強いキャラクターです。"
+  },
+  {
+    level:"基本偽装", tag:"関係性", diff:2,
+    q:"ミスターポポと神様の関係で最も自然な説明はどれ？",
+    h:"主従というより、長く神殿を支える役割。",
+    a:2,
+    c:[
+      "神様が地球に来る以前から敵対していた古代魔族",
+      "神様の弟子として後に地球の神の座を継ぐ候補者",
+      "神様に仕え、神殿で日常管理や修行補佐を担う存在",
+      "神様が作ったドラゴンボールそのものの化身"
+    ],
+    e:"ポポは神様の身の回りや神殿の管理を担う存在として描かれます。後継者候補やドラゴンボールの化身ではありません。"
+  },
+  {
+    level:"修行", tag:"無心", diff:4,
+    q:"悟空が神殿で修行する際、ポポが重視した方向性として最も近いものはどれ？",
+    h:"力押しではなく、気配・反応・心の状態が重要。",
+    a:0,
+    c:[
+      "心を空にし、相手の動きを感じ取って無駄な動きを減らすこと",
+      "筋肉量を増やし、重い武器を使って破壊力だけを上げること",
+      "大猿化を意図的に制御し、月を見る訓練だけを続けること",
+      "ドラゴンレーダーの構造を理解し、探索能力を高めること"
+    ],
+    e:"神殿修行では、単純な力よりも動きの読み、無心、反応、気配といった方向の修行が印象的です。ポポは悟空にとってかなり異質な修行相手でした。"
+  },
+  {
+    level:"修行", tag:"技術", diff:5,
+    q:"ポポが悟空に対して示した“厄介さ”として最も適切なのはどれ？",
+    h:"強さの種類が違う。",
+    a:3,
+    c:[
+      "かめはめ波の威力だけなら亀仙人を大きく超えていた",
+      "巨大化して単純な体格差で悟空を圧倒した",
+      "仙豆を無制限に食べることで疲労を無効化した",
+      "攻撃を読ませず、無駄のない動きで悟空の攻めを受け流した"
+    ],
+    e:"ポポの怖さは、派手な必殺技ではなく、相手の動きに対する反応や身のこなしの不気味さにあります。初期の悟空にとっては“何をしても届かない”タイプの壁でした。"
+  },
+  {
+    level:"移動手段", tag:"魔法の絨毯", diff:4,
+    q:"ポポに関連する移動手段として印象的なものはどれ？",
+    h:"神殿の雰囲気に合う、かなり独特の乗り物。",
+    a:1,
+    c:[
+      "筋斗雲と同じ条件で乗れる白い雲",
+      "魔法の絨毯のような移動手段",
+      "ナメック星式の宇宙船を小型化した乗り物",
+      "ホイポイカプセル製の自律飛行バイク"
+    ],
+    e:"ミスターポポといえば、神殿まわりの神秘的な雰囲気に合う魔法の絨毯のイメージが強いです。科学機械系ではなく、神秘・魔法寄りの演出です。"
+  },
+  {
+    level:"神殿構造", tag:"精神と時の部屋", diff:5,
+    q:"神の神殿にある特殊な修行空間といえばどれ？",
+    h:"後の戦士たちの強化にも大きく関係。",
+    a:2,
+    c:[
+      "超神水の泉",
+      "ドラゴンボール再生室",
+      "精神と時の部屋",
+      "界王星への直通門"
+    ],
+    e:"神殿にある特殊空間として有名なのが精神と時の部屋です。ポポは神殿側の存在なので、その管理・案内役として連想されやすい重要要素です。"
+  },
+  {
+    level:"超難問", tag:"役割整理", diff:6,
+    q:"ポポを“戦闘力ランキングだけ”で語ると見落としやすい点はどれ？",
+    h:"強さとは別の“機能”がある。",
+    a:0,
+    c:[
+      "神殿・神様・修行環境をつなぐ管理者的な機能",
+      "サイヤ人の血統を解析する科学者としての機能",
+      "宇宙船の重力装置を調整する技術者としての機能",
+      "魔人ブウの封印を維持する魔導師としての機能"
+    ],
+    e:"ポポは単純なバトルキャラというより、神殿という舞台装置を成立させる存在です。修行、神様、精神と時の部屋、神殿の日常をつなぐキャラクターです。"
+  },
+  {
+    level:"ひっかけ", tag:"カリン塔", diff:5,
+    q:"ポポとカリン様の役割の違いとして最も正しいものはどれ？",
+    h:"どちらも“高い場所”にいるが、所属が違う。",
+    a:3,
+    c:[
+      "ポポは仙豆担当、カリン様は神殿の掃除担当",
+      "ポポは武道会審判、カリン様はドラゴンボール製作者",
+      "ポポは界王の付き人、カリン様は閻魔大王の部下",
+      "ポポは神殿側、カリン様はカリン塔側の存在として区別される"
+    ],
+    e:"高所にいる存在として混同しやすいですが、ポポは神殿、カリン様はカリン塔に関係する存在です。仙豆や超聖水の文脈は主にカリン様側です。"
+  },
+  {
+    level:"マニア", tag:"ドラゴンボール", diff:6,
+    q:"ポポとドラゴンボールの関係を説明するなら最も安全なのはどれ？",
+    h:"作った本人ではないが、神様側の周辺人物。",
+    a:1,
+    c:[
+      "ポポ自身が地球のドラゴンボールを創造した",
+      "神様に仕える存在として、ドラゴンボールを作った神様側の文脈に近い",
+      "ポポはドラゴンボールの願いで誕生した生命体",
+      "ポポはドラゴンボールを無効化できる唯一の地球人"
+    ],
+    e:"地球のドラゴンボールは神様の力に関係します。ポポはその神様に仕える神殿側の人物であり、創造者そのものとは言いにくいです。"
+  },
+  {
+    level:"地獄", tag:"選択肢精度", diff:8,
+    q:"“ポポのキャラクター性”を最も歪めずに表す言い方はどれ？",
+    h:"バトル漫画の中の、静かな異物感。",
+    a:2,
+    c:[
+      "常に前線で敵を倒し、悟空たちの代わりに戦局を決める武闘派",
+      "ギャグ要員としてだけ配置され、物語上の機能はほとんどない存在",
+      "神殿の静けさ、修行の不気味さ、神秘性を支える番人的存在",
+      "科学技術と宇宙船開発を一手に担うブルマのライバル"
+    ],
+    e:"ポポは派手な主役級ではありませんが、神殿の雰囲気を作る重要な存在です。静かで底知れない感じが、修行場面の緊張感を強めています。"
+  },
+  {
+    level:"神殿深層", tag:"神様交代", diff:7,
+    q:"地球の神様が交代する流れで、ポポの存在が効いてくる理由として近いものはどれ？",
+    h:"神殿に“制度”がある感じを出す。",
+    a:0,
+    c:[
+      "神殿と神様の役割が個人だけでなく場所・継承・管理に結びつくから",
+      "ポポが神様を倒した者にだけ神の座を与える決闘制度を持つから",
+      "ポポがドラゴンボールを分割して候補者に配るから",
+      "ポポ自身が新しい神様に変身するから"
+    ],
+    e:"ポポがいることで、神殿はただの建物ではなく、地球の神の役割を支える場所・制度のように見えます。神様個人だけではなく、神殿全体に重みが出ます。"
+  },
+  {
+    level:"マニア", tag:"ピッコロ", diff:6,
+    q:"神様とピッコロの関係を踏まえると、ポポ周辺の文脈で重要なのはどれ？",
+    h:"神様単体ではなく、地球の神話構造に絡む。",
+    a:3,
+    c:[
+      "ポポはピッコロ大魔王の直接の兄弟として登場する",
+      "ポポはピッコロの卵から生まれたため神殿に詳しい",
+      "ポポはピッコロの戦闘服を作った職人である",
+      "神様側の存在であるため、ピッコロと神様の因縁の対極側に位置する"
+    ],
+    e:"ポポは神様側の人物です。神様とピッコロの関係は地球の神話的構造に深く関わるため、ポポもその“神様側の環境”を支える存在として意味を持ちます。"
+  },
+  {
+    level:"ひっかけ", tag:"ブルマ", diff:5,
+    q:"ナメック星行きなどの宇宙船・科学技術の文脈で中心になるのは誰？",
+    h:"ポポではなく、科学側の人物。",
+    a:1,
+    c:[
+      "ミスターポポ",
+      "ブルマやブリーフ博士などの科学者側",
+      "カリン様",
+      "占いババ"
+    ],
+    e:"宇宙船や機械技術の中心はブルマやブリーフ博士たちです。ポポは神秘・神殿・修行側のキャラクターなので、科学技術担当と混同しないのがポイントです。"
+  },
+  {
+    level:"神殿構造", tag:"舞台装置", diff:7,
+    q:"神の神殿が物語上で担う役割として、ポポと最も相性が良い説明はどれ？",
+    h:"ただの休憩場所ではない。",
+    a:0,
+    c:[
+      "地上から切り離された修行・神性・継承の場",
+      "一般市民が自由に訪れる商業施設",
+      "カプセルコーポレーションの支社",
+      "天下一武道会の予選会場"
+    ],
+    e:"神殿は地上の日常から離れた場所で、修行、神様、ドラゴンボール、精神と時の部屋などに関係します。ポポはその雰囲気を維持するキャラクターです。"
+  },
+  {
+    level:"地獄", tag:"読解", diff:9,
+    q:"“ポポは弱いのか強いのか”という問いに対する、最も作品文脈に沿った答えはどれ？",
+    h:"数値で切ると雑になる。",
+    a:2,
+    c:[
+      "常にその時点のラスボスより強いと明示されている",
+      "完全に非戦闘員で、修行相手になったこともない",
+      "少なくとも初期悟空にとっては異質な壁であり、後年の単純比較とは別軸で語るべき",
+      "公式に戦闘力が全時代で一定と決まっている"
+    ],
+    e:"ポポは初期悟空に対して強烈な修行相手として機能します。ただし、後のインフレした戦闘力ランキングにそのまま置くと意味が変わるため、“文脈上の強さ”として見るのが自然です。"
+  },
+  {
+    level:"超難問", tag:"演出", diff:7,
+    q:"ポポの不気味さを支える演出として最も近いものはどれ？",
+    h:"喋り・動き・空間の静けさ。",
+    a:3,
+    c:[
+      "常に爆発エフェクトを背負って大声で名乗る",
+      "必ず派手な変身をしてから会話する",
+      "技名を叫びながら遠距離攻撃だけを連発する",
+      "静かな神殿で、淡々とした言動と底知れない動きを見せる"
+    ],
+    e:"ポポは派手さより静けさが印象的です。神殿の空気感と合わさって、何を考えているかわからないような底知れなさが出ます。"
+  },
+  {
+    level:"マニア", tag:"悟空", diff:6,
+    q:"悟空にとってポポとの修行が意味したものとして近いのはどれ？",
+    h:"“もっと強く殴る”だけではない段階へ。",
+    a:1,
+    c:[
+      "ドラゴンボールの願いを増やす方法の習得",
+      "力任せではない身体操作・心の使い方への移行",
+      "スーパーサイヤ人への直接覚醒",
+      "宇宙船操縦技術の習得"
+    ],
+    e:"ポポとの修行は、悟空の戦い方をより洗練させる方向にあります。単純な筋力強化ではなく、動き、感知、心の持ち方に関わります。"
+  },
+  {
+    level:"ひっかけ", tag:"神殿と地上", diff:5,
+    q:"神殿とカリン塔の位置関係・役割を雑に混同した説明はどれ？",
+    h:"混同説明を選ぶ問題です。",
+    a:0,
+    c:[
+      "カリン塔の上にある神殿も、仙豆栽培のための畑として使われている",
+      "カリン塔と神殿はどちらも地上から離れた高所の神秘的な場所として機能する",
+      "神殿は神様やポポと結びつき、カリン塔はカリン様の領域として印象づけられる",
+      "悟空の成長過程では、高所にある特殊な場所での修行が段階的に意味を持つ"
+    ],
+    e:"仙豆栽培の文脈はカリン様側です。神殿を仙豆畑として扱うのは混同です。この問題は“間違っている説明”を選ぶタイプでした。"
+  },
+  {
+    level:"地獄", tag:"文章判定", diff:8,
+    q:"次のうち、ポポの説明として最も危険な“言い過ぎ”はどれ？",
+    h:"完全断定に注意。",
+    a:3,
+    c:[
+      "神殿に仕える存在として、神様を支える役割が強い",
+      "悟空の修行相手として、初期の成長に関係する",
+      "神殿の特殊な空気感を象徴するキャラクターである",
+      "地球のドラゴンボールを単独で創造し、全願いを管理している"
+    ],
+    e:"ドラゴンボール創造は神様の力に関わる話です。ポポは神様側の補佐・神殿側の存在として重要ですが、単独創造者と断定するのは危険です。"
+  },
+  {
+    level:"超難問", tag:"キャラ機能", diff:7,
+    q:"ポポを“舞台装置キャラ”として見る場合、最も適切な評価はどれ？",
+    h:"出番の量ではなく、空間の意味を作る。",
+    a:0,
+    c:[
+      "神殿が単なる背景で終わらないよう、日常管理と神秘性を与える",
+      "悟空たちの全バトルに同行し、解説者として毎回戦況を読む",
+      "敵組織の内通者として緊張感を生む",
+      "天下一武道会の興行収入を管理する"
+    ],
+    e:"ポポは神殿を“生きた場所”にするキャラクターです。出番が多い少ないだけでは測れない、世界観の奥行きを作る役割があります。"
+  },
+  {
+    level:"地獄", tag:"総合", diff:9,
+    q:"神殿・神様・ポポ・修行の関係を一文でまとめるなら、最も精密なのはどれ？",
+    h:"全部盛りで、なおかつ過剰断定していない選択肢。",
+    a:2,
+    c:[
+      "ポポはカリン塔の仙豆を使い、神様を鍛えるために地上へ降り続ける武道家である",
+      "神様はポポの部下であり、精神と時の部屋はカプセル社の開発品である",
+      "神殿は神様の役割と特殊修行を支える場で、ポポはその管理・補佐・神秘性を担う存在である",
+      "ポポはドラゴンボール探索チームの一員で、主にレーダー修理と宇宙船整備を担当する"
+    ],
+    e:"最も過不足が少ないのは、神殿＝神様の役割と特殊修行の場、ポポ＝管理・補佐・神秘性を担う存在という整理です。"
+  },
+  {
+    level:"鬼", tag:"名称", diff:6,
+    q:"“ミスターポポ検定”で混同しやすいが、ポポそのものの役割から外れるものはどれ？",
+    h:"神殿から少し離れる。",
+    a:1,
+    c:[
+      "神様の補佐",
+      "仙豆の栽培と配布の中心",
+      "神殿の管理",
+      "修行者の案内・補助"
+    ],
+    e:"仙豆はカリン様の文脈です。ポポは神殿側の人物なので、仙豆管理者にしてしまうと混同になります。"
+  },
+  {
+    level:"鬼", tag:"文脈比較", diff:7,
+    q:"カリン様・ポポ・界王を比較したとき、ポポだけに最も寄る説明はどれ？",
+    h:"担当場所で考える。",
+    a:3,
+    c:[
+      "北の銀河方面で重力の小さい星に住む",
+      "仙豆や超聖水の試練と結びつく",
+      "死後の世界に近い修行ルートを担う",
+      "地球の神の神殿に仕える"
+    ],
+    e:"ポポは地球の神の神殿に仕える存在です。カリン様はカリン塔、界王は界王星・あの世寄りの文脈です。"
+  },
+  {
+    level:"鬼", tag:"超ひっかけ", diff:8,
+    q:"次のうち、全体として“ポポ寄り”の要素だけで構成されている組み合わせはどれ？",
+    h:"一つでも別文脈が混じるとアウト。",
+    a:0,
+    c:[
+      "神殿、神様、精神と時の部屋、修行補佐",
+      "仙豆、カリン塔、超聖水、神様",
+      "宇宙船、重力室、カプセル、魔法の絨毯",
+      "界王拳、元気玉、神殿、蛇の道"
+    ],
+    e:"ポポ寄りでまとまるのは神殿・神様・精神と時の部屋・修行補佐です。他はカリン様、ブルマ、界王などの文脈が混ざります。"
+  },
+  {
+    level:"ラスボス", tag:"文脈読解", diff:10,
+    q:"ポポが“強キャラ感”を持つ最大の理由を、作品序盤の読者体験に近い形で言うならどれ？",
+    h:"説明セリフより、悟空との接触で感じる強さ。",
+    a:1,
+    c:[
+      "最初から宇宙規模の破壊描写を見せたから",
+      "悟空の攻撃や常識が通じにくい、静かで異質な修行相手として現れたから",
+      "全ての敵を一撃で倒し、物語を短縮したから",
+      "ドラゴンボールの願いで毎回自分を強化したから"
+    ],
+    e:"ポポの強キャラ感は、初期悟空にとって異質で、掴みどころがなく、修行の壁として立ちはだかったことにあります。破壊規模ではなく、読者が感じる“不気味な格上感”が重要です。"
+  }
+];
+
+let mode = MODES[2];
+let pool = [];
+let index = 0;
+let score = 0;
+let streak = 0;
+let answered = false;
+let history = [];
+let timer = null;
+let remaining = 0;
+
+function $(id){return document.getElementById(id)}
+
+function setupSky(){
+  const sky=$("sky");
+  for(let i=0;i<34;i++){
+    const o=document.createElement("div");
+    o.className="orb";
+    const s=6+Math.random()*22;
+    o.style.width=s+"px"; o.style.height=s+"px";
+    o.style.left=Math.random()*100+"%";
+    o.style.animationDelay=(-Math.random()*10)+"s";
+    o.style.animationDuration=(8+Math.random()*12)+"s";
+    sky.appendChild(o);
+  }
+}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function buildModes(){
+  const grid=$("modeGrid");
+  grid.innerHTML="";
+  MODES.forEach(m=>{
+    const b=document.createElement("button");
+    b.className="modeBtn"+(m.id===mode.id?" active":"");
+    b.innerHTML=`${m.name}<small>${m.desc}<br>出題数：${m.count===999?"全問":m.count} / 制限：${m.time?m.time+"秒":"なし"}</small>`;
+    b.addEventListener("click",()=>{
+      mode=m;
+      start(false);
+    });
+    grid.appendChild(b);
+  });
+}
+
+function start(keepShuffle){
+  clearInterval(timer);
+  const base = mode.id==="basic" ? QUESTIONS.filter(q=>q.diff<=6)
+    : mode.id==="hard" ? QUESTIONS.filter(q=>q.diff>=4)
+    : mode.id==="mania" ? QUESTIONS.filter(q=>q.diff>=5)
+    : QUESTIONS;
+  pool = keepShuffle ? pool : shuffle(base).slice(0, Math.min(mode.count, base.length));
+  index=0; score=0; streak=0; history=[]; answered=false;
+  $("result").classList.remove("show");
+  buildModes();
+  render();
+}
+
+function render(){
+  clearInterval(timer);
+  answered=false;
+  const q=pool[index];
+  $("modeLabel").textContent=mode.name;
+  $("phaseLabel").textContent=`Q${index+1}/${pool.length}`;
+  $("qno").textContent=index+1;
+  $("score").textContent=score;
+  $("streak").textContent=streak;
+  $("acc").textContent=index===0 ? "0%" : Math.round(score/index*100)+"%";
+  $("bar").style.width=((index)/pool.length*100)+"%";
+  $("qMeta").innerHTML=`<span>${q.level}</span><span>${q.tag}</span><span>難度 ${q.diff}/10</span>`;
+  $("qText").textContent=q.q;
+  $("hint").textContent="ヒント：" + q.h;
+  $("explain").classList.remove("show");
+  $("explain").innerHTML="";
+  $("nextBtn").style.display="none";
+  const choices=$("choices");
+  choices.innerHTML="";
+  q.c.forEach((txt,i)=>{
+    const b=document.createElement("button");
+    b.className="choice";
+    b.innerHTML=`<span class="mark">${["A","B","C","D"][i]}</span><span>${txt}</span>`;
+    b.addEventListener("click",()=>answer(i,b));
+    choices.appendChild(b);
+  });
+  if(mode.time){
+    remaining=mode.time;
+    $("timerLabel").textContent=remaining+"秒";
+    timer=setInterval(()=>{
+      remaining--;
+      $("timerLabel").textContent=remaining+"秒";
+      if(remaining<=0){
+        clearInterval(timer);
+        answer(-1,null);
+      }
+    },1000);
+  }else{
+    $("timerLabel").textContent="制限なし";
+  }
+}
+
+function answer(choice, btn){
+  if(answered) return;
+  answered=true;
+  clearInterval(timer);
+  const q=pool[index];
+  const ok=choice===q.a;
+  if(ok){score++;streak++;} else {streak=0;}
+  [...document.querySelectorAll(".choice")].forEach((b,i)=>{
+    b.classList.add("locked");
+    if(i===q.a)b.classList.add("correct");
+    if(i===choice && !ok)b.classList.add("wrong");
+  });
+  if(choice===-1){
+    $("timerLabel").textContent="時間切れ";
+  }
+  const ex=$("explain");
+  ex.classList.add("show");
+  ex.innerHTML=`<b>${ok?"正解！":"不正解…"}</b><br>正解：${["A","B","C","D"][q.a]}：${q.c[q.a]}<br><br>${q.e}`;
+  history.push({q:q.q, ok, ans:choice, correct:q.a, tag:q.tag});
+  $("score").textContent=score;
+  $("streak").textContent=streak;
+  $("acc").textContent=Math.round(score/(index+1)*100)+"%";
+  $("nextBtn").style.display="inline-block";
+  if(index===pool.length-1){
+    $("nextBtn").textContent="結果を見る";
+  }else{
+    $("nextBtn").textContent="次の問題へ";
+  }
+}
+
+function next(){
+  if(!answered) return;
+  if(index < pool.length-1){
+    index++;
+    render();
+  }else{
+    finish();
+  }
+}
+
+function finish(){
+  clearInterval(timer);
+  $("bar").style.width="100%";
+  const rate=Math.round(score/pool.length*100);
+  let rank, msg;
+  if(rate>=95){rank="神殿の番人クラス"; msg="ほぼ完全。ポポの静かな圧を理解しすぎています。";}
+  else if(rate>=80){rank="神様補佐クラス"; msg="かなり強いです。混同しやすい文脈もかなり見抜けています。";}
+  else if(rate>=60){rank="カリン塔突破クラス"; msg="基礎は強いですが、神殿・カリン塔・科学技術の混同で削られています。";}
+  else if(rate>=40){rank="修行開始クラス"; msg="雰囲気はつかめています。神殿側と他キャラ文脈の切り分けが鍵です。";}
+  else{rank="地上へ帰還"; msg="この検定はかなり意地悪です。むしろ普通です。";}
+  $("rank").textContent=rank;
+  $("resultText").innerHTML=`スコア：<b>${score}/${pool.length}</b>（${rate}%）<br>${msg}`;
+  $("log").innerHTML=history.map((h,i)=>`
+    <div class="logItem">
+      <b>Q${i+1} ${h.ok?"✅":"❌"}［${h.tag}］</b><br>${h.q}
+    </div>
+  `).join("");
+  $("result").classList.add("show");
+  $("phaseLabel").textContent="FINISH";
+  $("nextBtn").style.display="none";
+  window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+}
+
+$("nextBtn").addEventListener("click",next);
+$("restartBtn").addEventListener("click",()=>start(false));
+$("shuffleBtn").addEventListener("click",()=>start(false));
+setupSky();
+buildModes();
+start(false);
+</script>
+</body>
+</html>
